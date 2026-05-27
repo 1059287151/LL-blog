@@ -1,6 +1,7 @@
 package com.ll.blog.controller;
 
 import com.ll.blog.model.dto.ArticlesPageQueryDTO;
+import com.ll.blog.model.vo.ArticleLinkVO;
 import com.ll.blog.model.vo.ArticlePageQueryVO;
 import com.ll.blog.result.PageResult;
 import com.ll.blog.result.Result;
@@ -24,6 +25,13 @@ public class ArticleController {
         log.info("分页查询{}", articlesPageQueryDTO);
         PageResult<ArticlePageQueryVO> page = articleService.page(articlesPageQueryDTO);
         return Result.success(page);
+    }
+
+    @GetMapping("/links")
+    public Result<ArticleLinkVO> getArticleLink(){
+        log.info("获取文章双链关系(知识图谱)");
+        ArticleLinkVO vo = articleService.getArticleLink();
+        return Result.success(vo);
     }
 
 }

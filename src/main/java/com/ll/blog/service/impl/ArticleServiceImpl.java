@@ -4,15 +4,21 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ll.blog.mapper.ArticleMapper;
+import com.ll.blog.mapper.CategoryMapper;
 import com.ll.blog.model.dto.ArticlesPageQueryDTO;
 import com.ll.blog.model.po.Article;
+import com.ll.blog.model.po.Category;
+import com.ll.blog.model.vo.ArticleLinkVO;
 import com.ll.blog.model.vo.ArticlePageQueryVO;
 import com.ll.blog.result.PageResult;
 import com.ll.blog.service.ArticleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.ll.blog.content.PageQuery.MAX_PAGE_SIZE;
 
@@ -21,6 +27,10 @@ import static com.ll.blog.content.PageQuery.MAX_PAGE_SIZE;
 public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleMapper articleMapper;
+    private final CategoryMapper categoryMapper;
+    // 匹配 [[...]] 双链，捕获组为 slug（不包含管道符别名）
+    private static final Pattern WIKI_LINK_PATTERN = Pattern.compile("\\[\\[([^]|]+?)]]");
+
 
     @Override
     public PageResult<ArticlePageQueryVO> page(ArticlesPageQueryDTO dto) {
@@ -36,4 +46,104 @@ public class ArticleServiceImpl implements ArticleService {
         List<ArticlePageQueryVO> vos = BeanUtil.copyToList(articlePage.getRecords(), ArticlePageQueryVO.class);
         return new PageResult<>(articlePage.getTotal(), vos);
     }
+
+    @Override
+    public ArticleLinkVO getArticleLink() {
+        /*// 1. 查询所有已发布文章（只需要 slug, title, content, category_id）
+        List<Article> articles = articleMapper.selectList(
+                new LambdaQueryWrapper<Article>()
+                        .eq(Article::getIsPublished, 1)
+                        .select(Article::getSlug, Article::getTitle, Article::getContent, Article::getCategoryId)
+        );
+
+        if (articles.isEmpty()) {
+            return new ArticleLinkVO(Collections.emptyList(), Collections.emptyList());
+        }
+
+        // 2. 建立 slug → article 映射
+        Map<String, Article> slugMap = articles.stream()
+                .collect(Collectors.toMap(Article::getSlug, a -> a, (a, b) -> a));
+
+        // 3. 构建节点列表
+        List<ArticleLinkVO.Node> nodes = articles.stream()
+                .map(article -> {
+                    String group = getCategoryNameOrDefault(article.getCategoryId());
+                    return new ArticleLinkVO.Node(article.getSlug(), article.getTitle(), group);
+                })
+                .collect(Collectors.toList());*/
+        // 1. 查询所有已发布文章
+        List<Article> articles = articleMapper.selectList(
+                new LambdaQueryWrapper<Article>()
+                        .eq(Article::getIsPublished, 1)
+                        .select(Article::getSlug, Article::getTitle, Article::getContent, Article::getCategoryId)
+        );
+
+        if (articles.isEmpty()) {
+            return new ArticleLinkVO(Collections.emptyList(), Collections.emptyList());
+        }
+
+        // 2. 收集所有 categoryId（用于批量查分类）
+        Set<Long> categoryIds = articles.stream()
+                .map(Article::getCategoryId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // 3. 批量查询分类名，建立 id -> name 映射
+        Map<Long, String> categoryNameMap = new HashMap<>();
+        if (!categoryIds.isEmpty()) {
+            List<Category> categories = categoryMapper.selectList(
+                    new LambdaQueryWrapper<Category>().in(Category::getId, categoryIds)
+            );
+            categories.forEach(c -> categoryNameMap.put(c.getId(), c.getName()));
+        }
+
+        // 4. 构建 slug → article 映射（用于连线验证）
+        Map<String, Article> slugMap = articles.stream()
+                .collect(Collectors.toMap(Article::getSlug, a -> a, (a, b) -> a));
+
+        // 5. 构建节点
+        List<ArticleLinkVO.Node> nodes = articles.stream()
+                .map(article -> {
+                    String group = article.getCategoryId() == null
+                            ? "未分类"
+                            : categoryNameMap.getOrDefault(article.getCategoryId(), "未分类");
+                    return new ArticleLinkVO.Node(article.getSlug(), article.getTitle(), group);
+                })
+                .collect(Collectors.toList());
+
+
+        // 4. 构建连线列表（去重）
+        Set<String> linkSet = new HashSet<>();
+        List<ArticleLinkVO.Link> links = new ArrayList<>();
+
+        for (Article article : articles) {
+            String content = article.getContent();
+            if (content == null) continue;
+            Matcher matcher = WIKI_LINK_PATTERN.matcher(content);
+            while (matcher.find()) {
+                String targetSlug = matcher.group(1).trim();
+                // 目标存在且不是自身
+                if (!targetSlug.equals(article.getSlug()) && slugMap.containsKey(targetSlug)) {
+                    String key = article.getSlug() + "→" + targetSlug;
+                    if (!linkSet.contains(key)) {
+                        linkSet.add(key);
+                        links.add(new ArticleLinkVO.Link(article.getSlug(), targetSlug));
+                    }
+                }
+            }
+        }
+
+        return new ArticleLinkVO(nodes, links);
+    }
+
+    /*
+      获取分类名称（建议替换为真实的 CategoryMapper 查询）
+     */
+    /*private String getCategoryNameOrDefault(Long categoryId) {
+        if (categoryId == null) return "未分类";
+        // TODO: 注入 CategoryMapper 获取真实分类名
+        // Category category = categoryMapper.selectById(categoryId);
+        // return category != null ? category.getName() : "未分类";
+        return "分类-" + categoryId; // 临时占位
+    }*/
 }
