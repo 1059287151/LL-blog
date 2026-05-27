@@ -1,7 +1,9 @@
 package com.ll.blog.model.po;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -9,6 +11,8 @@ import java.time.LocalDateTime;
  * 文章
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @TableName("articles")
 public class Article {
     @TableId(type = IdType.AUTO)

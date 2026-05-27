@@ -5,7 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class NotesPageQueryVO {
+public class NotePageQueryVO {
 
     private Long id;
     private String content;

@@ -7,24 +7,24 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ll.blog.mapper.NoteMapper;
 import com.ll.blog.model.dto.NotesPageQueryDTO;
 import com.ll.blog.model.po.Note;
-import com.ll.blog.model.vo.NotesPageQueryVO;
+import com.ll.blog.model.vo.NotePageQueryVO;
 import com.ll.blog.result.PageResult;
-import com.ll.blog.service.NotesService;
+import com.ll.blog.service.NoteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static com.ll.blog.content.PageQuery.MAX_PAGE_SIZE;
+
 @Service
 @RequiredArgsConstructor
-public class NotesServiceImpl implements NotesService {
-
-    private static final int MAX_PAGE_SIZE = 100;
+public class NoteServiceImpl implements NoteService {
 
     private final NoteMapper noteMapper;
 
     @Override
-    public PageResult<NotesPageQueryVO> page(NotesPageQueryDTO dto) {
+    public PageResult<NotePageQueryVO> page(NotesPageQueryDTO dto) {
         int page = dto.getPage() != null ? dto.getPage() : 1;
         int size = dto.getSize() != null ? dto.getSize() : 20;
         if (size > MAX_PAGE_SIZE) {
@@ -37,7 +37,7 @@ public class NotesServiceImpl implements NotesService {
 
         Page<Note> notePage = noteMapper.selectPage(pageParam, wrapper);
 
-        List<NotesPageQueryVO> vos = BeanUtil.copyToList(notePage.getRecords(), NotesPageQueryVO.class);
+        List<NotePageQueryVO> vos = BeanUtil.copyToList(notePage.getRecords(), NotePageQueryVO.class);
 
         return new PageResult<>(notePage.getTotal(), vos);
     }
