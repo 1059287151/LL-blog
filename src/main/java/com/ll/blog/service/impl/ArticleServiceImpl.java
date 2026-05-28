@@ -3,11 +3,16 @@ package com.ll.blog.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ll.blog.exception.BusinessException;
 import com.ll.blog.mapper.ArticleMapper;
+import com.ll.blog.mapper.ArticleTagMapper;
 import com.ll.blog.mapper.CategoryMapper;
+import com.ll.blog.mapper.TagMapper;
 import com.ll.blog.model.dto.ArticlesPageQueryDTO;
 import com.ll.blog.model.po.Article;
+import com.ll.blog.model.po.ArticleTag;
 import com.ll.blog.model.po.Category;
+import com.ll.blog.model.vo.ArticleDetailVO;
 import com.ll.blog.model.vo.ArticleLinkVO;
 import com.ll.blog.model.vo.ArticlePageQueryVO;
 import com.ll.blog.result.PageResult;
@@ -28,6 +33,8 @@ public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleMapper articleMapper;
     private final CategoryMapper categoryMapper;
+    private final ArticleTagMapper articleTagMapper;  // 新增
+    private final TagMapper tagMapper;                // 新增
     // 匹配 [[...]] 双链，捕获组为 slug（不包含管道符别名）
     private static final Pattern WIKI_LINK_PATTERN = Pattern.compile("\\[\\[([^]|]+?)]]");
 
@@ -132,8 +139,74 @@ public class ArticleServiceImpl implements ArticleService {
                 }
             }
         }
-
+        System.out.println(nodes);
+        System.out.println(links);
         return new ArticleLinkVO(nodes, links);
+    }
+
+    @Override
+    public ArticleDetailVO getArticleSlug(String slug) {
+        // 1. 查文章
+        Article article = articleMapper.selectOne(
+                new LambdaQueryWrapper<Article>()
+                        .eq(Article::getSlug, slug)
+                        .eq(Article::getIsPublished, 1)
+        );
+        if (article == null) {
+            throw new BusinessException("文章不存在");
+        }
+
+        // 2. 查询标签列表
+        List<String> tags = articleTagMapper.selectList(
+                        new LambdaQueryWrapper<ArticleTag>()
+                                .eq(ArticleTag::getArticleId, article.getId())
+                ).stream()
+                .map(at -> tagMapper.selectById(at.getTagId()).getName())
+                .collect(Collectors.toList());
+
+        // 3. 上一篇
+        ArticleDetailVO.ArticleLink prev = null;
+        Article prevArticle = articleMapper.selectOne(
+                new LambdaQueryWrapper<Article>()
+                        .eq(Article::getIsPublished, 1)
+                        .lt(Article::getCreatedAt, article.getCreatedAt())
+                        .orderByDesc(Article::getCreatedAt)
+                        .last("LIMIT 1")
+                        .select(Article::getSlug, Article::getTitle)
+        );
+        if (prevArticle != null) {
+            prev = new ArticleDetailVO.ArticleLink(prevArticle.getSlug(), prevArticle.getTitle());
+        }
+
+        // 4. 下一篇
+        ArticleDetailVO.ArticleLink next = null;
+        Article nextArticle = articleMapper.selectOne(
+                new LambdaQueryWrapper<Article>()
+                        .eq(Article::getIsPublished, 1)
+                        .gt(Article::getCreatedAt, article.getCreatedAt())
+                        .orderByAsc(Article::getCreatedAt)
+                        .last("LIMIT 1")
+                        .select(Article::getSlug, Article::getTitle)
+        );
+        if (nextArticle != null) {
+            next = new ArticleDetailVO.ArticleLink(nextArticle.getSlug(), nextArticle.getTitle());
+        }
+
+        // 5. 组装 VO
+        /*ArticleDetailVO vo = new ArticleDetailVO();
+        vo.setTitle(article.getTitle());
+        vo.setSlug(article.getSlug());
+        vo.setContent(article.getContent());
+        vo.setTags(tags);
+        vo.setCreatedAt(article.getCreatedAt());
+        vo.setUpdatedAt(article.getUpdatedAt());
+        vo.setPrevArticle(prev);
+        vo.setNextArticle(next);*/
+        ArticleDetailVO vo = BeanUtil.copyProperties(article, ArticleDetailVO.class);
+        vo.setTags(tags);
+        vo.setPrevArticle(prev);
+        vo.setNextArticle(next);
+        return vo;
     }
 
     /*
