@@ -4,11 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ArticleLinkVO {
+public class StatusNowVO {
     private Music music;
     private Reading reading;
     private String location;
@@ -30,4 +31,5 @@ public class ArticleLinkVO {
         private String title;
         private String cover;
     }
+
 }

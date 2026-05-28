@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 @TableName("statuses")
 public class Status {
     @TableId(type = IdType.AUTO)   // 其实 id=1 固定，但可不用自增，这里仍保持
-    private Integer id;
+    private Long id;
+    private Long userId;          // 新增，关联用户
     private String musicTitle;
     private String musicArtist;
     private String musicCover;
@@ -20,6 +21,9 @@ public class Status {
     private String readingTitle;
     private String readingCover;
     private String location;
-    @TableField(fill = FieldFill.INSERT_UPDATE)
+
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
+    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedAt;
 }
