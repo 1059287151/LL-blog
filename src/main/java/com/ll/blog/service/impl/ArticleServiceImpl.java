@@ -25,7 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.ll.blog.content.PageQuery.MAX_PAGE_SIZE;
+import static com.ll.blog.constant.PageQueryConstant.MAX_PAGE_SIZE;
 
 @Service
 @RequiredArgsConstructor
@@ -85,6 +85,7 @@ public class ArticleServiceImpl implements ArticleService {
                         .select(Article::getSlug, Article::getTitle, Article::getContent, Article::getCategoryId)
         );
 
+        // TODO 报错构造函数
         if (articles.isEmpty()) {
             return new ArticleLinkVO(Collections.emptyList(), Collections.emptyList());
         }

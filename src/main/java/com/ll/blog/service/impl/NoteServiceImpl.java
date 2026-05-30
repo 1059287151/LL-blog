@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.ll.blog.content.PageQuery.MAX_PAGE_SIZE;
+import static com.ll.blog.constant.PageQueryConstant.MAX_PAGE_SIZE;
 
 @Service
 @RequiredArgsConstructor
