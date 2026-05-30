@@ -29,6 +29,7 @@ public class AuthServiceImpl implements AuthService {
     public LoginVO login(String username, String password) {
         User user = userService.findByUsername(username);
         if (user == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
+            //TODO 异常信息类要换
             throw new BusinessException("用户名或密码错误");
         }
         // 1. 生成 Token
