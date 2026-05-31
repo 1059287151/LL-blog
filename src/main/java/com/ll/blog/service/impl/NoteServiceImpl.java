@@ -7,10 +7,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ll.blog.exception.BusinessException;
 import com.ll.blog.exception.ContentBeyondException;
 import com.ll.blog.exception.ContentNotNullException;
+import com.ll.blog.mapper.NoteLikeMapper;
 import com.ll.blog.mapper.NoteMapper;
 import com.ll.blog.model.dto.NotesPageQueryDTO;
 import com.ll.blog.model.po.Note;
+import com.ll.blog.model.po.NoteLike;
 import com.ll.blog.model.vo.NoteContentVO;
+import com.ll.blog.model.vo.NoteLikeVO;
 import com.ll.blog.model.vo.NotePageQueryVO;
 import com.ll.blog.result.PageResult;
 import com.ll.blog.service.NoteService;
@@ -29,6 +32,7 @@ import static com.ll.blog.constant.PageQueryConstant.MAX_PAGE_SIZE;
 public class NoteServiceImpl implements NoteService {
 
     private final NoteMapper noteMapper;
+    private final NoteLikeMapper noteLikeMapper;
 
     @Override
     public PageResult<NotePageQueryVO> page(NotesPageQueryDTO dto) {
@@ -74,5 +78,42 @@ public class NoteServiceImpl implements NoteService {
         NoteContentVO VO = BeanUtil.copyProperties(note, NoteContentVO.class);
         VO.setIsLiked(false);
         return VO;
+    }
+
+    @Override
+    public NoteLikeVO likeStatus(Long id) {
+        // 1. 获取当前用户ID
+        Long userId = UserHolder.getUser().getId();
+
+        // 2. 校验短内容是否存在
+        Note note = noteMapper.selectById(id);
+        if (note == null) {
+            throw new ContentNotNullException("短内容不存在", 404);
+        }
+
+        // 3. 查询是否已点赞（利用唯一约束）
+        NoteLike noteLike = noteLikeMapper.selectOne(
+                new LambdaQueryWrapper<NoteLike>()
+                        .eq(NoteLike::getNoteId, id)
+                        .eq(NoteLike::getUserId, userId)
+        );
+
+        boolean isLiked;
+        if (noteLike != null) {
+            // 已点赞 → 取消点赞
+            noteLikeMapper.deleteById(noteLike.getId());
+            isLiked = false;
+        } else {
+            // 未点赞 → 添加点赞
+            noteLike = new NoteLike();
+            noteLike.setNoteId(id);
+            noteLike.setUserId(userId);
+            noteLikeMapper.insert(noteLike);
+            isLiked = true;
+        }
+
+        // 4. 重新查询最新的点赞数（数据库触发器会自动维护 notes.likes）
+        Note updatedNote = noteMapper.selectById(id);
+        return new NoteLikeVO(updatedNote.getLikes(), isLiked);
     }
 }

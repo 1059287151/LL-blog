@@ -2,7 +2,9 @@ package com.ll.blog.controller;
 
 import com.ll.blog.model.dto.NoteContentDTO;
 import com.ll.blog.model.dto.NotesPageQueryDTO;
+import com.ll.blog.model.po.NoteLike;
 import com.ll.blog.model.vo.NoteContentVO;
+import com.ll.blog.model.vo.NoteLikeVO;
 import com.ll.blog.model.vo.NotePageQueryVO;
 import com.ll.blog.result.PageResult;
 import com.ll.blog.result.Result;
@@ -31,5 +33,12 @@ public class NoteController {
         log.info("发布短内容:{}", noteContentDTO);
         NoteContentVO vo = noteService.announceContent(noteContentDTO.getContent());
         return Result.success(vo);
+    }
+
+    @PostMapping("/{id}/like")
+    public Result<NoteLikeVO> likeStatus(@PathVariable Long id){
+        log.info("切换点赞状态:{}",id);
+        NoteLikeVO VO = noteService.likeStatus(id);
+        return Result.success(VO);
     }
 }
