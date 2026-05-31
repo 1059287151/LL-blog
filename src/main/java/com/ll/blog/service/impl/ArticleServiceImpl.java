@@ -154,7 +154,7 @@ public class ArticleServiceImpl implements ArticleService {
                         .eq(Article::getIsPublished, 1)
         );
         if (article == null) {
-            throw new BusinessException("文章不存在");
+            throw new ArithmeticException("文章不存在");
         }
 
         // 2. 查询标签列表
