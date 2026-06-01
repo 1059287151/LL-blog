@@ -34,11 +34,15 @@ public class AuthServiceImpl implements AuthService {
         }
         // 1. 生成 Token
         String token = tokenUtil.generatorToken();
+//        // ========== 👇 新增 ==========
+//        // 2. 清理该用户旧 token，避免多端登录残留
+//        tokenRedisService.removeUserTokens(user.getId());
+//        // ========== 👆 新增 ==========
         // 2. 构建 UserDTO，以 Hash 结构存入 Redis
         //UserDTO userDTO = new UserDTO(user.getId(), user.getUsername(), user.getNickname(), user.getAvatar());
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
         tokenRedisService.storeToken(token, userDTO, tokenExpireSeconds);
-        // 3. 返回 Token 和用户信息
+        // 4. 返回 Token 和用户信息
         //LoginVO.UserVO userVO = new LoginVO.UserVO(user.getId(), user.getUsername(), user.getNickname(), user.getAvatar());
         LoginVO.UserVO userVO = BeanUtil.copyProperties(user, LoginVO.UserVO.class);
         return new LoginVO(token, userVO);

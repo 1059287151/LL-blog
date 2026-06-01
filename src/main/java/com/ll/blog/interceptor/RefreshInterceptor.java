@@ -17,9 +17,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import static com.ll.blog.utils.RedisConstant.LOGIN_USER_TTL;
 import static com.ll.blog.utils.RedisConstant.TOKEN_PREFIX;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class RefreshInterceptor implements HandlerInterceptor {
 
     private final StringRedisTemplate stringRedisTemplate;
@@ -29,17 +31,24 @@ public class RefreshInterceptor implements HandlerInterceptor {
         // 获取请求头token
         String token = request.getHeader("authorization");
         if(StrUtil.isBlank(token)){
+            log.warn("请求头 Authorization 为空，URL = {}", request.getRequestURI());
             return true;
+        }
+        // 去掉 Bearer 前缀
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
         }
         // 基于token获取redis中的用户
         String key = TOKEN_PREFIX + token;
         Map<Object, Object> userMap = stringRedisTemplate.opsForHash().entries(key);
         // 判断用户是否存在
         if(userMap.isEmpty()){
+            log.warn("Redis 中不存在该 token，token = {}, URL = {}", token, request.getRequestURI());
             return true;
         }
         // 将查询的数据转换为UserDTO
         UserDTO userDTO = BeanUtil.fillBeanWithMap(userMap, new UserDTO(), false);
+        log.info("token 验证成功，用户 = {}, URL = {}", userDTO.getUsername(), request.getRequestURI());
         // 存在，信息保存到ThreadLocal
         UserHolder.saveUser(userDTO);
         // 刷新token有效期

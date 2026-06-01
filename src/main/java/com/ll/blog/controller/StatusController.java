@@ -1,5 +1,6 @@
 package com.ll.blog.controller;
 
+import com.ll.blog.model.dto.UserDTO;
 import com.ll.blog.model.vo.StatusNowVO;
 import com.ll.blog.result.Result;
 import com.ll.blog.service.StatusService;
@@ -22,7 +23,11 @@ public class StatusController {
     @GetMapping("/now")
     public Result<StatusNowVO> getStatusNow(){
         log.info("获取当前状态");
-        Long userId = UserHolder.getUser().getId();
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.error("请先登录");
+        }
+        Long userId = user.getId();
         StatusNowVO vo = statusService.getStatusNow(userId);
         return Result.success(vo);
     }

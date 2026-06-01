@@ -25,6 +25,7 @@ public class AuthController {
     @PostMapping("/logout")
     public Result<Void> logout(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
+        log.info("logout: 原始 header = {}, 提取 token = {}", authHeader, token);
         authService.logout(token);
         return Result.success();
     }
