@@ -47,9 +47,7 @@ public class NoteServiceImpl implements NoteService {
                 .orderByDesc(Note::getCreatedAt);
 
         Page<Note> notePage = noteMapper.selectPage(pageParam, wrapper);
-
         List<NotePageQueryVO> vos = BeanUtil.copyToList(notePage.getRecords(), NotePageQueryVO.class);
-
         return new PageResult<>(notePage.getTotal(), vos);
     }
 

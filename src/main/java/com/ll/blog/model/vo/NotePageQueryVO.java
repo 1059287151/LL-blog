@@ -9,7 +9,7 @@ public class NotePageQueryVO {
 
     private Long id;
     private String content;
-    private LocalDateTime createAt;
+    private LocalDateTime createdAt;
     private Integer likes;
     private Boolean isLiked = false;
 
