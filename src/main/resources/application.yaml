@@ -30,3 +30,9 @@ logging:
 auth:
   token:
     expire: 7200   # Token 过期时间（秒）
+#阿里云OSS
+aliyun:
+  oss:
+    endpoint: https://oss-cn-chengdu.aliyuncs.com
+    bucketName: ll-cc-blog
+    region: cn-chengdu
