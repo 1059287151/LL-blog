@@ -23,7 +23,8 @@ public class MvcConfig implements WebMvcConfigurer {
                         "/articles/**",          // 文章相关接口公开
                         "/notes",                 // 获取短内容列表公开（GET，但同路径 POST 会多一次校验？需注意）
                         "/ai/**",
-                        "/lab/**"
+                        "/lab/**",
+                        "/animes/**"
                         // 这里根据实际需求调整，允许不需要登录就能访问的接口
                 ).order(1);
         // token刷新拦截器

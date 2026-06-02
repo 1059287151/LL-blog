@@ -16,10 +16,12 @@ public class Anime {
     @TableId(type = IdType.AUTO)
     private Long id;
     private String title;
+    private String titleJa;
     private String cover;
     private String summary;
     private String type;
-    private String season;          // 新增，放送季度
+    private Integer episodesTotal;
+    private String season;
     private BigDecimal rating;
     private LocalDate airDate;
     @TableField("production_status")
