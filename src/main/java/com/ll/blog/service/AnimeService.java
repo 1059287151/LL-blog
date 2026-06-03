@@ -1,5 +1,6 @@
 package com.ll.blog.service;
 
+import com.ll.blog.model.dto.AnimeRecordDTO;
 import com.ll.blog.model.dto.AnimesPageQueryDTO;
 import com.ll.blog.model.vo.AnimeDetailVO;
 import com.ll.blog.model.vo.AnimePageQueryVO;
@@ -15,4 +16,9 @@ public interface AnimeService {
     AnimeDetailVO getById(Long id);
 
     List<UserAnimeVO> getUserAnimeList(Integer watchStatus);
+
+    void saveOrUpdateAnimeRecord(AnimeRecordDTO dto);
+
+    void deleteById(Integer animeId);
+
 }

@@ -1,5 +1,6 @@
 package com.ll.blog.controller;
 
+import com.ll.blog.model.dto.AnimeRecordDTO;
 import com.ll.blog.model.dto.UserDTO;
 import com.ll.blog.model.vo.LoginVO;
 import com.ll.blog.model.vo.UserAnimeVO;
@@ -9,10 +10,7 @@ import com.ll.blog.service.UserService;
 import com.ll.blog.utils.UserHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -37,6 +35,20 @@ public class UserController {
         log.info("查询用户追番列表 watchStatus={}", watchStatus);
         List<UserAnimeVO> list = animeService.getUserAnimeList(watchStatus);
         return Result.success(list);
+    }
+
+    @PostMapping("/animes")
+    public Result<Void> updateAnimeRecord(@RequestBody AnimeRecordDTO animeRecordDTO){
+        log.info("保存或更新追番记录:{}", animeRecordDTO);
+        animeService.saveOrUpdateAnimeRecord(animeRecordDTO);
+        return Result.success();
+    }
+
+    @DeleteMapping("/animes")
+    public Result<Void> deleteAnimeRecord(@RequestParam Integer animeId){
+        log.info("删除追番记录,id:{}", animeId);
+        animeService.deleteById(animeId);
+        return Result.success();
     }
 
 }

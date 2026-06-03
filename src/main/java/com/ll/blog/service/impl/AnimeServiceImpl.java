@@ -1,12 +1,14 @@
 package com.ll.blog.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ll.blog.exception.AnimeNotExist;
 import com.ll.blog.exception.BusinessException;
 import com.ll.blog.mapper.AnimeMapper;
 import com.ll.blog.mapper.UserAnimeMapper;
+import com.ll.blog.model.dto.AnimeRecordDTO;
 import com.ll.blog.model.dto.AnimesPageQueryDTO;
 import com.ll.blog.model.dto.UserDTO;
 import com.ll.blog.model.po.Anime;
@@ -106,6 +108,39 @@ public class AnimeServiceImpl implements AnimeService {
             return vo;
         }).toList();
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveOrUpdateAnimeRecord(AnimeRecordDTO dto) {
+        UserDTO user = UserHolder.getUser();
+
+        Anime anime = animeMapper.selectById(dto.getAnimeId());
+        if (anime == null) {
+            throw new AnimeNotExist("番剧不存在");
+        }
+
+        UserAnime existing = userAnimeMapper.selectOne(new LambdaQueryWrapper<UserAnime>()
+                .eq(UserAnime::getUserId, user.getId())
+                .eq(UserAnime::getAnimeId, dto.getAnimeId()));
+
+        if (existing != null) {
+            BeanUtil.copyProperties(dto, existing, CopyOptions.create().ignoreNullValue());
+            userAnimeMapper.updateById(existing);
+        } else {
+            UserAnime userAnime = BeanUtil.copyProperties(dto, UserAnime.class);
+            userAnime.setUserId(user.getId());
+            userAnimeMapper.insert(userAnime);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteById(Integer animeId) {
+        UserDTO user = UserHolder.getUser();
+        userAnimeMapper.delete(new LambdaQueryWrapper<UserAnime>()
+                .eq(UserAnime::getUserId, user.getId())
+                .eq(UserAnime::getAnimeId, animeId));
     }
 
 }

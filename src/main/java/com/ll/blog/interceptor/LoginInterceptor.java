@@ -1,5 +1,6 @@
 package com.ll.blog.interceptor;
 
+import com.ll.blog.exception.LoginNotTokenException;
 import com.ll.blog.utils.UserHolder;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,18 +12,17 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class LoginInterceptor implements HandlerInterceptor {
     // 基于redis设置拦截器
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         // 判断是否要拦截
         if(UserHolder.getUser() == null){
-            response.setStatus(401);
-            return false;
+            throw new LoginNotTokenException("请先登录", 401);
         }
         // 有用户，放行
         return true;
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable Exception ex) throws Exception {
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable Exception ex) {
         // 移出用户
         UserHolder.removeUser();
     }
