@@ -36,3 +36,6 @@ aliyun:
     endpoint: https://oss-cn-chengdu.aliyuncs.com
     bucketName: ll-cc-blog
     region: cn-chengdu
+#hexo配置
+hexo:
+  posts-path: classpath:hexo/source/_posts/

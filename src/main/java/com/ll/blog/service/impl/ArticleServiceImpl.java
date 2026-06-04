@@ -3,7 +3,7 @@ package com.ll.blog.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ll.blog.exception.BusinessException;
+import com.ll.blog.cache.ArticleCache;
 import com.ll.blog.mapper.ArticleMapper;
 import com.ll.blog.mapper.ArticleTagMapper;
 import com.ll.blog.mapper.CategoryMapper;
@@ -19,6 +19,7 @@ import com.ll.blog.result.PageResult;
 import com.ll.blog.service.ArticleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -27,19 +28,20 @@ import java.util.stream.Collectors;
 
 import static com.ll.blog.constant.PageQueryConstant.MAX_PAGE_SIZE;
 
-@Service
 @RequiredArgsConstructor
-public class ArticleServiceImpl implements ArticleService {
+public class ArticleServiceImpl {
 
     private final ArticleMapper articleMapper;
     private final CategoryMapper categoryMapper;
     private final ArticleTagMapper articleTagMapper;  // 新增
     private final TagMapper tagMapper;                // 新增
+    private final ArticleCache articleCache;
+    private static final Pattern WIKI_LINK = Pattern.compile("\\[\\[([^]|]+)]]");
     // 匹配 [[...]] 双链，捕获组为 slug（不包含管道符别名）
     private static final Pattern WIKI_LINK_PATTERN = Pattern.compile("\\[\\[([^]|]+?)]]");
 
 
-    @Override
+    //@Override
     public PageResult<ArticlePageQueryVO> page(ArticlesPageQueryDTO dto) {
         int page = dto.getPage() != null ? dto.getPage() : 1;
         int size = dto.getSize() != null ? dto.getSize() : 5;
@@ -54,7 +56,8 @@ public class ArticleServiceImpl implements ArticleService {
         return new PageResult<>(articlePage.getTotal(), vos);
     }
 
-    @Override
+    //@Override
+    @Transactional(rollbackFor = Exception.class)
     public ArticleLinkVO getArticleLink() {
         /*// 1. 查询所有已发布文章（只需要 slug, title, content, category_id）
         List<Article> articles = articleMapper.selectList(
@@ -85,7 +88,6 @@ public class ArticleServiceImpl implements ArticleService {
                         .select(Article::getSlug, Article::getTitle, Article::getContent, Article::getCategoryId)
         );
 
-        // TODO 报错构造函数
         if (articles.isEmpty()) {
             return new ArticleLinkVO(Collections.emptyList(), Collections.emptyList());
         }
@@ -140,12 +142,10 @@ public class ArticleServiceImpl implements ArticleService {
                 }
             }
         }
-        System.out.println(nodes);
-        System.out.println(links);
         return new ArticleLinkVO(nodes, links);
     }
 
-    @Override
+    //@Override
     public ArticleDetailVO getArticleSlug(String slug) {
         // 1. 查文章
         Article article = articleMapper.selectOne(
@@ -194,15 +194,6 @@ public class ArticleServiceImpl implements ArticleService {
         }
 
         // 5. 组装 VO
-        /*ArticleDetailVO vo = new ArticleDetailVO();
-        vo.setTitle(article.getTitle());
-        vo.setSlug(article.getSlug());
-        vo.setContent(article.getContent());
-        vo.setTags(tags);
-        vo.setCreatedAt(article.getCreatedAt());
-        vo.setUpdatedAt(article.getUpdatedAt());
-        vo.setPrevArticle(prev);
-        vo.setNextArticle(next);*/
         ArticleDetailVO vo = BeanUtil.copyProperties(article, ArticleDetailVO.class);
         vo.setTags(tags);
         vo.setPrevArticle(prev);
@@ -210,14 +201,11 @@ public class ArticleServiceImpl implements ArticleService {
         return vo;
     }
 
-    /*
-      获取分类名称（建议替换为真实的 CategoryMapper 查询）
-     */
-    /*private String getCategoryNameOrDefault(Long categoryId) {
+    //获取分类名称（建议替换为真实的 CategoryMapper 查询）
+    private String getCategoryNameOrDefault(Long categoryId) {
         if (categoryId == null) return "未分类";
         // TODO: 注入 CategoryMapper 获取真实分类名
-        // Category category = categoryMapper.selectById(categoryId);
-        // return category != null ? category.getName() : "未分类";
-        return "分类-" + categoryId; // 临时占位
-    }*/
+        Category category = categoryMapper.selectById(categoryId);
+        return category != null ? category.getName() : "未分类";
+    }
 }
