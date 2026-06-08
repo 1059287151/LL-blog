@@ -6,7 +6,7 @@ tags:
   - 后端
   - Java
 summary: 这是一篇关于 Java 的入门文章。
-cover: https://picsum.photos/seed/vue3/800/400
+cover: https://ll-java-web.oss-cn-chengdu.aliyuncs.com/2025/04/c0a3df8c-aa10-4c41-bfcc-34539acadbe8.jpg
 ---
 
 # 常用API：[idea](E:\ideacode\myapi)
