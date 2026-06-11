@@ -5,11 +5,10 @@ import cn.hutool.core.bean.copier.CopyOptions;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ll.blog.exception.AnimeNotExist;
-import com.ll.blog.exception.BusinessException;
 import com.ll.blog.mapper.AnimeMapper;
 import com.ll.blog.mapper.UserAnimeMapper;
 import com.ll.blog.model.dto.AnimeRecordDTO;
-import com.ll.blog.model.dto.AnimesPageQueryDTO;
+import com.ll.blog.model.dto.AnimePageQueryDTO;
 import com.ll.blog.model.dto.UserDTO;
 import com.ll.blog.model.po.Anime;
 import com.ll.blog.model.po.UserAnime;
@@ -39,7 +38,7 @@ public class AnimeServiceImpl implements AnimeService {
     private final UserAnimeMapper userAnimeMapper;
 
     @Override
-    public PageResult<AnimePageQueryVO> page(AnimesPageQueryDTO dto) {
+    public PageResult<AnimePageQueryVO> page(AnimePageQueryDTO dto) {
         int page = dto.getPage() != null ? dto.getPage() : 1;
         int size = dto.getSize() != null ? dto.getSize() : 10;
         if (size > MAX_PAGE_SIZE) {
@@ -135,7 +134,6 @@ public class AnimeServiceImpl implements AnimeService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Integer animeId) {
         UserDTO user = UserHolder.getUser();
         userAnimeMapper.delete(new LambdaQueryWrapper<UserAnime>()

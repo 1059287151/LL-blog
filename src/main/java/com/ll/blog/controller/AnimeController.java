@@ -1,6 +1,6 @@
 package com.ll.blog.controller;
 
-import com.ll.blog.model.dto.AnimesPageQueryDTO;
+import com.ll.blog.model.dto.AnimePageQueryDTO;
 import com.ll.blog.model.vo.AnimeDetailVO;
 import com.ll.blog.model.vo.AnimePageQueryVO;
 import com.ll.blog.result.PageResult;
@@ -22,7 +22,7 @@ public class AnimeController {
     private final AnimeService animeService;
 
     @GetMapping
-    public Result<PageResult<AnimePageQueryVO>> page(AnimesPageQueryDTO dto) {
+    public Result<PageResult<AnimePageQueryVO>> page(AnimePageQueryDTO dto) {
         log.info("分页查询番剧{}", dto);
         PageResult<AnimePageQueryVO> page = animeService.page(dto);
         return Result.success(page);

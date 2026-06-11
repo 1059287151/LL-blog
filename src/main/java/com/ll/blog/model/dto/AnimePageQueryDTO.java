@@ -3,7 +3,7 @@ package com.ll.blog.model.dto;
 import lombok.Data;
 
 @Data
-public class AnimesPageQueryDTO {
+public class AnimePageQueryDTO {
     private Integer page;
     private Integer size;
     private String season;

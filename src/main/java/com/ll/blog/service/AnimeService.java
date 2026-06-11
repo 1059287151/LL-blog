@@ -1,7 +1,7 @@
 package com.ll.blog.service;
 
 import com.ll.blog.model.dto.AnimeRecordDTO;
-import com.ll.blog.model.dto.AnimesPageQueryDTO;
+import com.ll.blog.model.dto.AnimePageQueryDTO;
 import com.ll.blog.model.vo.AnimeDetailVO;
 import com.ll.blog.model.vo.AnimePageQueryVO;
 import com.ll.blog.model.vo.UserAnimeVO;
@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface AnimeService {
 
-    PageResult<AnimePageQueryVO> page(AnimesPageQueryDTO dto);
+    PageResult<AnimePageQueryVO> page(AnimePageQueryDTO dto);
 
     AnimeDetailVO getById(Long id);
 
