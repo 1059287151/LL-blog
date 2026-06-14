@@ -1,4 +1,5 @@
-package com.ll.blog.utils;
+package com.ll.blog.config;
+
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

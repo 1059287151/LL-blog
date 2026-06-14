@@ -1,4 +1,4 @@
-package com.ll.blog.utils;
+package com.ll.blog.config;
 
 import com.aliyun.oss.ClientBuilderConfiguration;
 import com.aliyun.oss.OSS;
@@ -6,7 +6,7 @@ import com.aliyun.oss.OSSClientBuilder;
 import com.aliyun.oss.common.auth.CredentialsProviderFactory;
 import com.aliyun.oss.common.auth.EnvironmentVariableCredentialsProvider;
 import com.aliyun.oss.common.comm.SignVersion;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
@@ -15,10 +15,20 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class AliyunOSSOperator {
 
-    private final AliyunOSSProperties aliyunOSSProperties;
+    //方式一
+    /*@Value("${aliyun.oss.endpoint}")
+    private String endpoint;
+    @Value("${aliyun.oss.bucketName}")
+    private String bucketName;
+    @Value("${aliyun.oss.region}")
+    private String region;*/
+
+    @Autowired
+    private AliyunOSSProperties aliyunOSSProperties;
+
+
 
     public String upload(byte[] content, String originalFilename) throws Exception {
         String endpoint = aliyunOSSProperties.getEndpoint();
@@ -53,4 +63,6 @@ public class AliyunOSSOperator {
 
         return endpoint.split("//")[0] + "//" + bucketName + "." + endpoint.split("//")[1] + "/" + objectName;
     }
+
 }
+
