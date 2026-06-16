@@ -1,47 +1,58 @@
 server:
-  port: 8085
+  port: 8080
+
 spring:
   application:
     name: blog
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:ll-blog}?useSSL=false&serverTimezone=UTC
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      database: 0
       lettuce:
         pool:
           max-active: 10
           max-idle: 10
           min-idle: 1
           time-between-eviction-runs: 10s
-      database: 1
+
   sql:
     init:
-      mode: always  # 部署到 Railway 第一次启动时建表，后续可以改为 never
+      mode: always
       schema-locations: classpath:schema.sql
+
   jackson:
-    default-property-inclusion: non_null # JSON处理时忽略非空字段
+    default-property-inclusion: non_null
+
 mybatis-plus:
-  type-aliases-package: com.ll.blog.model.po # 别名扫描包
+  mapper-locations: classpath*:mapper/*.xml
+  type-aliases-package: com.ll.blog.model.po
   configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 打印 SQL 到控制台
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
 logging:
   level:
     com.ll.blog: debug
+    org.springframework.boot.autoconfigure.jdbc: debug
+    org.springframework.boot.context.properties: debug
+
 auth:
   token:
-    expire: 7200   # Token 过期时间（秒）
-#阿里云OSS
+    expire: 7200
+
 aliyun:
   oss:
     endpoint: https://oss-cn-chengdu.aliyuncs.com
     bucketName: ll-cc-blog
     region: cn-chengdu
-#hexo配置
+
 hexo:
   posts-path: classpath:hexo/source/_posts/
