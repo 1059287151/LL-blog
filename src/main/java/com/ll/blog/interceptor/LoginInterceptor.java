@@ -13,6 +13,11 @@ public class LoginInterceptor implements HandlerInterceptor {
     // 基于redis设置拦截器
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        // 1. 放行登录接口
+        String path = request.getRequestURI();
+        if ("/auth/login".equals(path) || path.startsWith("/auth/login")) {
+            return true;
+        }
         // 判断是否要拦截
         if(UserHolder.getUser() == null){
             throw new LoginNotTokenException("请先登录", 401);
