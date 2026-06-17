@@ -28,6 +28,11 @@ public class RefreshInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // 可删
+        String path = request.getRequestURI();
+        if ("/auth/login".equals(path) || path.startsWith("/auth/login")) {
+            return true; // 登录接口直接放行，不处理 token
+        }
         // 获取请求头token
         String token = request.getHeader("authorization");
         if(StrUtil.isBlank(token)){
