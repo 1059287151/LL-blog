@@ -37,4 +37,14 @@ public class GlobalException {
         return Result.error("缺少必要参数: " + ex.getParameterName());
     }
 
+    /**
+     * 兜底异常处理，防止 500 时返回默认的 Spring Boot 错误格式
+     */
+    @ExceptionHandler(value = Exception.class)
+    public Result<Void> exceptionHandler(Exception ex, HttpServletResponse response){
+        log.error("未处理的异常: {}", ex.getMessage(), ex);
+        response.setStatus(500);
+        return Result.error("服务器内部错误: " + ex.getMessage());
+    }
+
 }

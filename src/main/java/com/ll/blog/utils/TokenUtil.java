@@ -11,8 +11,7 @@ public class TokenUtil {
      * 生成的随机token
      * @return
      */
-    @Bean
-    public  String generatorToken(){
+    public String generatorToken(){
         return UUID.randomUUID().toString(true);
     }
 }
