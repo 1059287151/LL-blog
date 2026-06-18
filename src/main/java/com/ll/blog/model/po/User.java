@@ -18,6 +18,7 @@ public class User {
     private String passwordHash;
     private String email;
     private String avatar;
+    @TableField("role")
     private String nickname;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
