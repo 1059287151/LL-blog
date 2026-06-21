@@ -13,6 +13,10 @@ public class LoginInterceptor implements HandlerInterceptor {
     // 基于redis设置拦截器
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        // 0. 放行 CORS 预检请求（浏览器的 OPTIONS 预检不带 token，必须直接放行）
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
         // 1. 放行登录接口和错误转发
         String path = request.getRequestURI();
         if ("/auth/login".equals(path) || path.startsWith("/auth/login") || "/error".equals(path)) {

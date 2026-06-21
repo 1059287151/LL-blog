@@ -30,8 +30,9 @@ public class MvcConfig implements WebMvcConfigurer {
                         "/animes/**",
                         "/about/**",
                         "/upload/**",
-                        "/friend-link/**",
-                        "/footprint/**"
+                        "/friend-links/**",
+                        "/footprints/**",
+                        "/status/**"
                 ).order(1);
         // token刷新拦截器
         registry.addInterceptor(refreshInterceptor)

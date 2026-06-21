@@ -195,3 +195,20 @@ create table if not exists tarot_cards
     updated_at  datetime default CURRENT_TIMESTAMP            null on update CURRENT_TIMESTAMP,
     constraint uk_type_number_suit unique (type, card_number, suit)
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '塔罗牌数据表';
+
+create table user_animes
+(
+    id               bigint unsigned auto_increment
+        primary key,
+    user_id          bigint unsigned                    not null comment '用户ID',
+    anime_id         bigint unsigned                    not null comment '番剧ID',
+    watch_status     tinyint  default 0                 null comment '观看状态：0-想看,1-在看,2-已看完,3-弃了',
+    episodes_watched int      default 0                 null comment '已看集数',
+    rating           decimal(3, 1)                      null comment '个人评分',
+    comment          varchar(500)                       null comment '个人短评',
+    created_at       datetime default CURRENT_TIMESTAMP not null,
+    updated_at       datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    constraint uk_user_anime
+        unique (user_id, anime_id)
+)
+    comment '用户追番记录' charset = utf8mb4;
