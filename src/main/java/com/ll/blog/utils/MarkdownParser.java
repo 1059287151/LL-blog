@@ -1,13 +1,13 @@
 package com.ll.blog.utils;
 
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.StrUtil;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @UtilityClass
@@ -18,7 +18,7 @@ public class MarkdownParser {
 
     public static ArticleMeta parse(Path filePath) {
         try {
-            String raw = Files.readString(filePath);
+            String raw = FileUtil.readUtf8String(filePath.toFile());
             // 提取 YAML Front Matter（--- 之间）
             String[] parts = raw.split("---", 3);
             String yamlStr = null;
@@ -38,7 +38,7 @@ public class MarkdownParser {
             List<String> tags = Collections.emptyList();
             String date = null;
 
-            if (yamlStr != null && !yamlStr.isEmpty()) {
+            if (StrUtil.isNotBlank(yamlStr)) {
                 Yaml yaml = new Yaml();
                 Map<String, Object> meta = yaml.load(yamlStr);
                 if (meta != null) {
@@ -49,13 +49,13 @@ public class MarkdownParser {
 
                     // 处理日期：SnakeYAML 可能解析为 Date 或 String
                     Object dateObj = meta.get("date");
-                    if (dateObj instanceof Date) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        date = sdf.format((Date) dateObj);
-                    } else if (dateObj instanceof String) {
-                        date = (String) dateObj;
+                    if (dateObj instanceof Date d) {
+                        date = DateUtil.format(d, "yyyy-MM-dd HH:mm:ss");
+                    } else if (dateObj instanceof String s) {
+                        date = s;
                     }
 
+                    // 处理标签
                     Object tagsObj = meta.get("tags");
                     if (tagsObj instanceof List) {
                         tags = ((List<?>) tagsObj).stream().map(Object::toString).toList();
@@ -65,9 +65,9 @@ public class MarkdownParser {
                 }
             }
 
-            if (title == null) title = slug;
+            if (StrUtil.isBlank(title)) title = slug;
             return new ArticleMeta(title, slug, summary, cover, tags, date, content);
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("解析 Markdown 失败: {}", filePath, e);
             return null;
         }
