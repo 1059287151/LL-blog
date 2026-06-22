@@ -17,8 +17,14 @@ public class MarkdownParser {
                               List<String> tags, String date, String content) {}
 
     public static ArticleMeta parse(Path filePath) {
+        return parse(FileUtil.readUtf8String(filePath.toFile()), filePath.getFileName().toString());
+    }
+
+    /**
+     * 从内容字符串解析（JAR 内文件用此方法，避免 getFile() 失败）
+     */
+    public static ArticleMeta parse(String raw, String fileName) {
         try {
-            String raw = FileUtil.readUtf8String(filePath.toFile());
             // 提取 YAML Front Matter（--- 之间）
             String[] parts = raw.split("---", 3);
             String yamlStr = null;
@@ -32,7 +38,7 @@ public class MarkdownParser {
             }
 
             String title = null;
-            String slug = filePath.getFileName().toString().replace(".md", "");
+            String slug = fileName.replace(".md", "");
             String summary = "";
             String cover = null;
             List<String> tags = Collections.emptyList();
@@ -68,7 +74,7 @@ public class MarkdownParser {
             if (StrUtil.isBlank(title)) title = slug;
             return new ArticleMeta(title, slug, summary, cover, tags, date, content);
         } catch (Exception e) {
-            log.error("解析 Markdown 失败: {}", filePath, e);
+            log.error("解析 Markdown 失败: {}", fileName, e);
             return null;
         }
     }

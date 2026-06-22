@@ -2,6 +2,7 @@ package com.ll.blog.cache;
 
 import com.ll.blog.config.HexoConfig;
 import com.ll.blog.utils.MarkdownParser;
+import cn.hutool.core.io.IoUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +11,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
-import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -42,8 +43,9 @@ public class ArticleCache implements CommandLineRunner {
             Resource[] resources = new PathMatchingResourcePatternResolver()
                     .getResources(hexoConfig.getPostsPath() + "**/*.md");
             for (Resource res : resources) {
-                Path filePath = res.getFile().toPath();
-                MarkdownParser.ArticleMeta meta = MarkdownParser.parse(filePath);
+                String raw = IoUtil.read(res.getInputStream(), StandardCharsets.UTF_8);
+                String fileName = res.getFilename();
+                MarkdownParser.ArticleMeta meta = MarkdownParser.parse(raw, fileName);
                 if (meta != null && meta.slug() != null) {
                     slugMap.put(meta.slug(), meta);
                     sortedList.add(meta);
