@@ -4,4 +4,6 @@ import com.ll.blog.model.po.User;
 
 public interface UserService {
     User findByUsername(String username);
+
+    void save(User user);
 }

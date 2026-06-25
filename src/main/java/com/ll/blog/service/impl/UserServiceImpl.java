@@ -20,4 +20,9 @@ public class UserServiceImpl implements UserService {
                 new LambdaQueryWrapper<User>().eq(User::getUsername, username)
         );
     }
+
+    @Override
+    public void save(User user) {
+        userMapper.insert(user);
+    }
 }

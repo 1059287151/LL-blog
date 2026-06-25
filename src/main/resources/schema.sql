@@ -6,12 +6,14 @@ create table if not exists users
 (
     id          bigint unsigned auto_increment primary key,
     username    varchar(50)  not null unique,
-    password    varchar(255) not null,
+    password    varchar(255) not null comment 'bcrypt 加密',
     email       varchar(100) null,
-    avatar      varchar(500) null,
-    role        varchar(20)  default 'user' null,
-    created_at  datetime     default CURRENT_TIMESTAMP null,
-    updated_at  datetime     default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP
+    avatar      varchar(500) null comment '头像URL',
+    role        varchar(50)  null comment '昵称',
+    created_at  datetime default CURRENT_TIMESTAMP not null,
+    updated_at  datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    constraint uk_email unique (email),
+    constraint uk_username unique (username)
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '用户表';
 
 create table if not exists categories

@@ -2,6 +2,7 @@ package com.ll.blog.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.ll.blog.exception.BusinessException;
+import com.ll.blog.model.dto.RegisterDTO;
 import com.ll.blog.model.dto.UserDTO;
 import com.ll.blog.model.po.User;
 import com.ll.blog.model.vo.LoginVO;
@@ -46,6 +47,32 @@ public class AuthServiceImpl implements AuthService {
         //LoginVO.UserVO userVO = new LoginVO.UserVO(user.getId(), user.getUsername(), user.getNickname(), user.getAvatar());
         LoginVO.UserVO userVO = BeanUtil.copyProperties(user, LoginVO.UserVO.class);
         return new LoginVO(token, userVO);
+    }
+
+    @Override
+    public LoginVO.UserVO register(RegisterDTO dto) {
+        // 1. 基础校验
+        if (dto.getNickname() == null || dto.getNickname().trim().isEmpty()) {
+            throw new BusinessException("请输入昵称");
+        }
+        if (dto.getUsername() == null || dto.getUsername().trim().isEmpty()) {
+            throw new BusinessException("请输入用户名");
+        }
+        if (dto.getPassword() == null || dto.getPassword().length() < 6) {
+            throw new BusinessException("密码至少需要6个字符");
+        }
+        // 2. 用户名查重（username 有唯一约束兜底，这里先查重给友好提示）
+        if (userService.findByUsername(dto.getUsername()) != null) {
+            throw new BusinessException("用户名已存在");
+        }
+        // 3. 创建用户：密码加密存储；昵称写入 nickname（映射到 role 列）
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setNickname(dto.getNickname());
+        user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        userService.save(user); // createdAt/updatedAt 由 MyMetaObjectHandler 自动填充
+        // 4. 返回创建后的用户信息（不含 token，前端注册后跳转登录页）
+        return BeanUtil.copyProperties(user, LoginVO.UserVO.class);
     }
 
     /**

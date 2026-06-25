@@ -1,6 +1,7 @@
 package com.ll.blog.controller;
 
 import com.ll.blog.model.dto.LoginDTO;
+import com.ll.blog.model.dto.RegisterDTO;
 import com.ll.blog.model.vo.LoginVO;
 import com.ll.blog.result.Result;
 import com.ll.blog.service.AuthService;
@@ -20,6 +21,12 @@ public class AuthController {
     public Result<LoginVO> login(@RequestBody LoginDTO request) {
         LoginVO loginVO = authService.login(request.getUsername(), request.getPassword());
         return Result.success(loginVO);
+    }
+
+    @PostMapping("/register")
+    public Result<LoginVO.UserVO> register(@RequestBody RegisterDTO request) {
+        LoginVO.UserVO userVO = authService.register(request);
+        return Result.success(userVO);
     }
 
     @PostMapping("/logout")

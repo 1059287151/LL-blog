@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "LL-Blog API (Token + Redis)",
-    "version": "2.0.0",
-    "description": "基于随机 Token + Redis 的博客后端接口，认证方式为请求头 Authorization: Bearer <token>"
+    "version": "2.1.0",
+    "description": "基于随机 Token + Redis 的博客后端接口，认证方式为请求头 Authorization: Bearer <token>。新增用户 AI 配置管理。"
   },
   "servers": [
     { "url": "http://localhost:8080/api", "description": "本地开发" }
@@ -52,6 +52,49 @@
         }
       }
     },
+    "/auth/register": {
+      "post": {
+        "tags": ["认证"],
+        "summary": "用户注册",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nickname", "username", "password"],
+                "properties": {
+                  "nickname": { "type": "string", "example": "小明" },
+                  "username": { "type": "string", "example": "xiaoming" },
+                  "password": { "type": "string", "example": "123456" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "注册成功，返回创建的用户信息",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/UserInfo" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/logout": {
       "post": {
         "tags": ["认证"],
@@ -90,6 +133,74 @@
                     }
                   ]
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/ai-config": {
+      "get": {
+        "tags": ["AI 配置"],
+        "summary": "获取当前用户的 AI 配置（需登录）",
+        "security": [{ "bearerAuth": [] }],
+        "description": "返回的 apiKey 为脱敏形式（如 sk-...abcd），不返回真实 Key。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/AiConfigResponse"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["AI 配置"],
+        "summary": "保存或更新当前用户的 AI 配置（需登录）",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AiConfigSaveRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "保存成功",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["AI 配置"],
+        "summary": "删除当前用户的 AI 配置（需登录）",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
               }
             }
           }
@@ -360,8 +471,9 @@
     "/ai/summary": {
       "post": {
         "tags": ["AI"],
-        "summary": "获取文章 AI 摘要",
-        "security": [],
+        "summary": "获取文章 AI 摘要（需先配置 AI Key）",
+        "security": [{ "bearerAuth": [] }],
+        "description": "使用当前用户配置的模型和 Key 生成文章摘要，若未配置 Key 则返回错误提示。",
         "requestBody": {
           "required": true,
           "content": {
@@ -399,8 +511,9 @@
     "/ai/chat": {
       "post": {
         "tags": ["AI"],
-        "summary": "与 AI 对话",
-        "security": [],
+        "summary": "与 AI 对话（需先配置 AI Key）",
+        "security": [{ "bearerAuth": [] }],
+        "description": "使用当前用户配置的模型和 Key 进行对话，若未配置 Key 则返回错误提示。",
         "requestBody": {
           "required": true,
           "content": {
@@ -461,6 +574,354 @@
           }
         }
       }
+    },
+    "/animes": {
+      "get": {
+        "tags": ["番剧"],
+        "summary": "获取番剧列表（分页、筛选）",
+        "security": [],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 12 } },
+          { "name": "season", "in": "query", "schema": { "type": "string" }, "description": "放送季度，如 2023秋" },
+          { "name": "type", "in": "query", "schema": { "type": "string" }, "description": "类型：TV/剧场版/OVA" },
+          { "name": "productionStatus", "in": "query", "schema": { "type": "integer" }, "description": "制作状态：1-连载中,2-已完结" },
+          { "name": "keyword", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/AnimePage" } } }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/animes/{id}": {
+      "get": {
+        "tags": ["番剧"],
+        "summary": "获取番剧详情",
+        "security": [],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/AnimeDetail" } } }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/animes": {
+      "get": {
+        "tags": ["番剧"],
+        "summary": "获取当前用户的追番列表（需登录）",
+        "security": [{ "bearerAuth": [] }],
+        "description": "返回用户追番记录，附带关联的番剧元数据。",
+        "parameters": [
+          { "name": "watchStatus", "in": "query", "schema": { "type": "integer" }, "description": "筛选观看状态：0-想看,1-在看,2-已看完,3-弃了" }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/UserAnime" } } } }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["番剧"],
+        "summary": "保存或更新追番记录（需登录）",
+        "security": [{ "bearerAuth": [] }],
+        "description": "同一用户+同一番剧只存在一条记录，重复提交会更新。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserAnimeSaveRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "保存成功",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["番剧"],
+        "summary": "删除追番记录（需登录）",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "query", "schema": { "type": "integer" }, "description": "user_animes 表的记录 ID" }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/footprints": {
+      "get": {
+        "tags": ["足迹"],
+        "summary": "获取当前用户的足迹列表（需登录）",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Footprint" } } } }
+                  ],
+                  "example": {
+                    "code": 200,
+                    "msg": "success",
+                    "data": [
+                      {
+                        "id": 1,
+                        "city": "东京",
+                        "country": "日本",
+                        "lat": 35.6762,
+                        "lng": 139.6503,
+                        "date": "2024-04-01",
+                        "note": "樱花季的浅草寺",
+                        "photo": null,
+                        "createdAt": "2024-04-01T10:30:00Z",
+                        "updatedAt": "2024-04-01T10:30:00Z"
+                      },
+                      {
+                        "id": 2,
+                        "city": "北京",
+                        "country": "中国",
+                        "lat": 39.9042,
+                        "lng": 116.4074,
+                        "date": "2024-08-15",
+                        "note": "故宫一日游",
+                        "photo": null,
+                        "createdAt": "2024-08-15T08:00:00Z",
+                        "updatedAt": "2024-08-15T08:00:00Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["足迹"],
+        "summary": "保存或更新足迹（需登录）",
+        "description": "请求体带 id 表示更新该记录，缺省则新增。",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FootprintSaveRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "保存成功",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["足迹"],
+        "summary": "删除足迹（需登录）",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "query", "required": true, "schema": { "type": "integer" }, "description": "footprints 表的记录 ID" }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friend-links": {
+      "get": {
+        "tags": ["友链"],
+        "summary": "获取当前用户的友链列表（需登录）",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/FriendLink" } } } }
+                  ],
+                  "example": {
+                    "code": 200,
+                    "msg": "success",
+                    "data": [
+                      {
+                        "id": 1,
+                        "name": "小明の博客",
+                        "url": "https://example.com",
+                        "avatar": null,
+                        "city": "北京",
+                        "lat": 39.9042,
+                        "lng": 116.4074,
+                        "description": "一个有趣的开发者",
+                        "createdAt": "2024-03-01T12:00:00Z",
+                        "updatedAt": "2024-03-01T12:00:00Z"
+                      },
+                      {
+                        "id": 2,
+                        "name": "樱花日记",
+                        "url": "https://sakura.jp",
+                        "avatar": null,
+                        "city": "东京",
+                        "lat": 35.6762,
+                        "lng": 139.6503,
+                        "description": null,
+                        "createdAt": "2024-05-10T09:00:00Z",
+                        "updatedAt": "2024-05-10T09:00:00Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["友链"],
+        "summary": "保存或更新友链（需登录）",
+        "description": "请求体带 id 表示更新该记录，缺省则新增。",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FriendLinkSaveRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "保存成功",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["友链"],
+        "summary": "删除友链（需登录）",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "query", "required": true, "schema": { "type": "integer" }, "description": "friend_links 表的记录 ID" }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/about": {
+      "get": {
+        "tags": ["关于"],
+        "summary": "获取关于页信息（时间线等）",
+        "description": "返回关于页展示的成长时间线等信息。公开接口，无需登录；图标与配色由前端决定，后端只提供文本数据。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/AboutInfo" }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "success",
+                  "data": {
+                    "timeline": [
+                      { "year": "2025", "title": "开始写博客", "desc": "搭建了这个数字分身博客，记录学习与生活，分享技术文章与个人思考。" },
+                      { "year": "2024", "title": "深入全栈开发", "desc": "掌握了 Vue 3、Spring Boot、Docker 等现代技术栈，开始独立完成完整项目。" }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -474,10 +935,10 @@
     "schemas": {
       "ApiResponse": {
         "type": "object",
+        "description": "通用响应壳，只含 code + msg；具体 data 类型由各接口通过 allOf 自行定义",
         "properties": {
           "code": { "type": "integer", "example": 200 },
-          "msg": { "type": "string", "example": "success" },
-          "data": { "type": "object", "nullable": true }
+          "msg": { "type": "string", "example": "success" }
         }
       },
       "LoginData": {
@@ -494,6 +955,27 @@
           "username": { "type": "string" },
           "nickname": { "type": "string" },
           "avatar": { "type": "string", "nullable": true }
+        }
+      },
+      "AiConfigSaveRequest": {
+        "type": "object",
+        "required": ["provider", "model", "apiKey"],
+        "properties": {
+          "provider": { "type": "string", "example": "openai" },
+          "model": { "type": "string", "example": "gpt-3.5-turbo" },
+          "apiKey": { "type": "string", "example": "sk-xxxxxxxxxxxxxxxx" }
+        }
+      },
+      "AiConfigResponse": {
+        "type": "object",
+        "properties": {
+          "provider": { "type": "string" },
+          "model": { "type": "string" },
+          "apiKey": {
+            "type": "string",
+            "description": "脱敏后的 Key，如 sk-...abcd",
+            "example": "sk-...abcd"
+          }
         }
       },
       "ArticlePage": {
@@ -653,6 +1135,160 @@
         "properties": {
           "name": { "type": "string" },
           "initialData": { "type": "object" }
+        }
+      },
+      "AnimePage": {
+        "type": "object",
+        "properties": {
+          "records": { "type": "array", "items": { "$ref": "#/components/schemas/AnimeListItem" } },
+          "total": { "type": "integer", "example": 50 },
+          "page": { "type": "integer", "example": 1 },
+          "size": { "type": "integer", "example": 12 }
+        }
+      },
+      "AnimeListItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "titleJa": { "type": "string", "nullable": true },
+          "cover": { "type": "string", "nullable": true },
+          "summary": { "type": "string", "nullable": true },
+          "type": { "type": "string", "nullable": true, "example": "TV" },
+          "episodesTotal": { "type": "integer", "nullable": true },
+          "season": { "type": "string", "nullable": true, "example": "2023秋" },
+          "rating": { "type": "number", "nullable": true },
+          "airDate": { "type": "string", "format": "date", "nullable": true },
+          "productionStatus": { "type": "integer", "example": 1, "description": "0-未知,1-连载中,2-已完结" }
+        }
+      },
+      "AnimeDetail": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "titleJa": { "type": "string", "nullable": true },
+          "cover": { "type": "string", "nullable": true },
+          "summary": { "type": "string", "nullable": true },
+          "type": { "type": "string", "nullable": true },
+          "episodesTotal": { "type": "integer", "nullable": true },
+          "season": { "type": "string", "nullable": true },
+          "rating": { "type": "number", "nullable": true },
+          "airDate": { "type": "string", "format": "date", "nullable": true },
+          "productionStatus": { "type": "integer" },
+          "userRecord": { "$ref": "#/components/schemas/UserAnimeRecord", "nullable": true, "description": "当前登录用户的追番记录，未登录时为 null" }
+        }
+      },
+      "UserAnimeRecord": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "description": "user_animes 表主键" },
+          "watchStatus": { "type": "integer", "example": 1, "description": "0-想看,1-在看,2-已看完,3-弃了" },
+          "episodesWatched": { "type": "integer", "example": 18 },
+          "rating": { "type": "number", "nullable": true, "example": 9.5 },
+          "comment": { "type": "string", "nullable": true }
+        }
+      },
+      "UserAnime": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "description": "user_animes 表主键" },
+          "anime": { "$ref": "#/components/schemas/AnimeListItem", "description": "关联的番剧元数据" },
+          "watchStatus": { "type": "integer", "example": 1 },
+          "episodesWatched": { "type": "integer", "example": 18 },
+          "rating": { "type": "number", "nullable": true, "example": 9.5 },
+          "comment": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UserAnimeSaveRequest": {
+        "type": "object",
+        "required": ["animeId", "watchStatus"],
+        "properties": {
+          "animeId": { "type": "integer", "description": "番剧 ID" },
+          "watchStatus": { "type": "integer", "description": "0-想看,1-在看,2-已看完,3-弃了" },
+          "episodesWatched": { "type": "integer", "default": 0 },
+          "rating": { "type": "number", "nullable": true },
+          "comment": { "type": "string", "nullable": true, "maxLength": 500 }
+        }
+      },
+      "Footprint": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "city": { "type": "string", "example": "东京" },
+          "country": { "type": "string", "nullable": true, "example": "日本" },
+          "lat": { "type": "number", "format": "double", "example": 35.6762 },
+          "lng": { "type": "number", "format": "double", "example": 139.6503 },
+          "date": { "type": "string", "format": "date", "nullable": true, "description": "到访日期" },
+          "note": { "type": "string", "nullable": true, "description": "游记/备注" },
+          "photo": { "type": "string", "nullable": true, "description": "照片 URL" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "FootprintSaveRequest": {
+        "type": "object",
+        "required": ["city", "lat", "lng"],
+        "properties": {
+          "id": { "type": "integer", "nullable": true, "description": "存在则更新该记录，缺省则新增" },
+          "city": { "type": "string", "maxLength": 100 },
+          "country": { "type": "string", "nullable": true, "maxLength": 100 },
+          "lat": { "type": "number", "format": "double", "minimum": -90, "maximum": 90 },
+          "lng": { "type": "number", "format": "double", "minimum": -180, "maximum": 180 },
+          "date": { "type": "string", "format": "date", "nullable": true },
+          "note": { "type": "string", "nullable": true, "maxLength": 2000 },
+          "photo": { "type": "string", "nullable": true, "maxLength": 500 }
+        }
+      },
+      "FriendLink": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string", "example": "小明の博客" },
+          "url": { "type": "string", "format": "uri", "example": "https://example.com" },
+          "avatar": { "type": "string", "nullable": true, "description": "头像 URL" },
+          "city": { "type": "string", "nullable": true, "example": "北京" },
+          "lat": { "type": "number", "format": "double", "nullable": true, "example": 39.9042 },
+          "lng": { "type": "number", "format": "double", "nullable": true, "example": 116.4074 },
+          "description": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "FriendLinkSaveRequest": {
+        "type": "object",
+        "required": ["name", "url"],
+        "properties": {
+          "id": { "type": "integer", "nullable": true, "description": "存在则更新该记录，缺省则新增" },
+          "name": { "type": "string", "maxLength": 100 },
+          "url": { "type": "string", "maxLength": 500 },
+          "avatar": { "type": "string", "nullable": true, "maxLength": 500 },
+          "city": { "type": "string", "nullable": true, "maxLength": 100 },
+          "lat": { "type": "number", "format": "double", "nullable": true, "minimum": -90, "maximum": 90 },
+          "lng": { "type": "number", "format": "double", "nullable": true, "minimum": -180, "maximum": 180 },
+          "description": { "type": "string", "nullable": true, "maxLength": 500 }
+        }
+      },
+      "AboutInfo": {
+        "type": "object",
+        "description": "关于页信息",
+        "properties": {
+          "timeline": {
+            "type": "array",
+            "description": "成长时间线，按时间倒序排列",
+            "items": { "$ref": "#/components/schemas/TimelineItem" }
+          }
+        }
+      },
+      "TimelineItem": {
+        "type": "object",
+        "description": "时间线条目（图标与配色由前端决定，后端不返回）",
+        "properties": {
+          "year": { "type": "string", "example": "2025" },
+          "title": { "type": "string", "example": "开始写博客" },
+          "desc": { "type": "string", "example": "搭建了这个数字分身博客，记录学习与生活。" }
         }
       }
     }
